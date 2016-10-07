@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'grafana' do
   context 'supported operating systems' do
-    ['Debian', 'RedHat'].each do |osfamily|
+    ['RedHat'].each do |osfamily|
       describe "grafana class without any parameters on #{osfamily}" do
         let(:params) {{ }}
         let(:facts) {{
@@ -32,27 +32,6 @@ describe 'grafana' do
   end
 
   context 'package install method' do
-    context 'debian' do
-      let(:facts) {{
-        :osfamily => 'Debian'
-      }}
-
-      download_location = '/tmp/grafana.deb'
-
-      describe 'use wget to fetch the package to a temporary location' do
-        it { should contain_wget__fetch('grafana').with_destination(download_location) }
-        it { should contain_wget__fetch('grafana').that_comes_before('Package[grafana]') }
-      end
-
-      describe 'install dependencies first' do
-        it { should contain_package('libfontconfig1').with_ensure('present').that_comes_before('Package[grafana]') }
-      end
-
-      describe 'install the package' do
-        it { should contain_package('grafana').with_provider('dpkg') }
-        it { should contain_package('grafana').with_source(download_location) }
-      end
-    end
 
     context 'redhat' do
       let(:facts) {{
@@ -74,27 +53,6 @@ describe 'grafana' do
       :install_method => 'repo',
       :manage_package_repo => true
     }}
-
-    context 'debian' do
-      let(:facts) {{
-        :osfamily => 'Debian',
-        :lsbdistid => 'Ubuntu'
-      }}
-
-      describe 'install apt repo dependencies first' do
-        it { should contain_class('apt') }
-        it { should contain_apt__source('grafana').with(:release => 'wheezy', :repos => 'main', :location => 'https://packagecloud.io/grafana/stable/debian') }
-        it { should contain_apt__source('grafana').that_comes_before('Package[grafana]') }
-      end
-
-      describe 'install dependencies first' do
-        it { should contain_package('libfontconfig1').with_ensure('present').that_comes_before('Package[grafana]') }
-      end
-
-      describe 'install the package' do
-        it { should contain_package('grafana').with_ensure('2.5.0') }
-      end
-    end
 
     context 'redhat' do
       let(:facts) {{
@@ -123,22 +81,6 @@ describe 'grafana' do
       :version => 'present'
     }}
 
-    context 'debian' do
-      let(:facts) {{
-        :osfamily => 'Debian',
-        :lsbdistid => 'Ubuntu'
-      }}
-
-      it { should compile.with_all_deps }
-
-      describe 'install dependencies first' do
-        it { should contain_package('libfontconfig1').with_ensure('present').that_comes_before('Package[grafana]') }
-      end
-
-      describe 'install the package' do
-        it { should contain_package('grafana').with_ensure('present') }
-      end
-    end
   end
 
   context 'archive install method' do

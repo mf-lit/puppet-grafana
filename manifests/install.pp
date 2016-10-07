@@ -14,11 +14,10 @@ class grafana::install {
   else {
     $real_package_source = $::osfamily ? {
       /(RedHat|Amazon)/ => "https://grafanarel.s3.amazonaws.com/builds/grafana-${::grafana::version}-${::grafana::rpm_iteration}.x86_64.rpm",
-      'Debian'          => "https://grafanarel.s3.amazonaws.com/builds/grafana_${::grafana::version}_amd64.deb",
       default           => $real_archive_source,
     }
   }
-  
+
   case $::grafana::install_method {
     'docker': {
       docker::image { 'grafana/grafana':
@@ -28,23 +27,6 @@ class grafana::install {
     }
     'package': {
       case $::osfamily {
-        'Debian': {
-          package { 'libfontconfig1':
-            ensure => present
-          }
-
-          wget::fetch { 'grafana':
-            source      => $real_package_source,
-            destination => '/tmp/grafana.deb'
-          }
-
-          package { $::grafana::package_name:
-            ensure   => present,
-            provider => 'dpkg',
-            source   => '/tmp/grafana.deb',
-            require  => [Wget::Fetch['grafana'],Package['libfontconfig1']]
-          }
-        }
         'RedHat': {
           package { 'fontconfig':
             ensure => present
@@ -64,33 +46,6 @@ class grafana::install {
     }
     'repo': {
       case $::osfamily {
-        'Debian': {
-          package { 'libfontconfig1':
-            ensure => present
-          }
-
-          if ( $::grafana::manage_package_repo ){
-            if !defined( Class['apt'] ) {
-              class { 'apt': }
-            }
-            apt::source { 'grafana':
-              location => "https://packagecloud.io/grafana/${::grafana::repo_name}/debian",
-              release  => 'wheezy',
-              repos    => 'main',
-              key      =>  {
-                'id'     => '418A7F2FB0E1E6E7EABF6FE8C2E73424D59097AB',
-                'source' => 'https://packagecloud.io/gpg.key'
-              },
-              before   => Package[$::grafana::package_name],
-            }
-            Class['apt::update'] -> Package[$::grafana::package_name]
-          }
-
-          package { $::grafana::package_name:
-            ensure  => $::grafana::version,
-            require => Package['libfontconfig1']
-          }
-        }
         'RedHat': {
           package { 'fontconfig':
             ensure => present
